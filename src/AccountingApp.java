@@ -29,8 +29,8 @@ public class AccountingApp {
 
     private void sayHello() {
 
-        double appVersion = 1.0;
-        System.out.printf("Программа бухгалтерского учета %.1f\n", appVersion);
+        double appVersion = 1.1;
+        System.out.printf("Программа бухгалтерского учета %.1f%s", appVersion, System.lineSeparator());
         System.out.println("Для выхода из программы выберите пункт меню.");
 
     }
@@ -45,23 +45,23 @@ public class AccountingApp {
             switch (userCommand) {
                 case READ_MONTHLY:
                     repository.readMonthlyReports();
-                    continue;
+                    break;
                 case READ_YEARLY:
                     repository.readYearReports();
-                    continue;
+                    break;
                 case CHECK_REPORTS:
                     reportChecker.checkReports();
-                    continue;
+                    break;
                 case PRINT_MONTHLY:
                     monthlyReport.print();
-                    continue;
+                    break;
                 case PRINT_YEARLY:
                     yearlyReport.print();
-                    continue;
+                    break;
                 case EXIT:
                     return;
                 default:
-                    continue;
+                    break;
             }
 
         }

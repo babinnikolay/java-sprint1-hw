@@ -32,7 +32,12 @@ public class YearlyReport implements Report {
 
         Map<Integer, List<YearAccountingEntry>> yearlyReports = repository.getYearlyReports();
 
-        for (Map.Entry<Integer, List<YearAccountingEntry>> entry : yearlyReports.entrySet()) {
+        printReportForEachYear(yearlyReports);
+
+    }
+
+    private void printReportForEachYear(Map<Integer, List<YearAccountingEntry>> yearlyReports) {
+        for (Map.Entry<Integer, List<YearAccountingEntry>> yearEntry : yearlyReports.entrySet()) {
 
             Map<Integer, Double> monthlyProfit = new HashMap<>();
             Double expenseSum = 0d;
@@ -41,7 +46,7 @@ public class YearlyReport implements Report {
             Double incomeSum = 0d;
             int incomeCount = 0;
 
-            for (YearAccountingEntry accountingEntry : entry.getValue()) {
+            for (YearAccountingEntry accountingEntry : yearEntry.getValue()) {
 
                 if (accountingEntry.isExpensive()) {
                     expenseSum += accountingEntry.getSum();
@@ -52,42 +57,56 @@ public class YearlyReport implements Report {
                 }
 
                 int month = accountingEntry.getMonth();
-                if (monthlyProfit.containsKey(month)) {
-
-                    double newMonthSum = monthlyProfit.get(month)
-                            + (accountingEntry.isExpensive() ? -accountingEntry.getSum() : accountingEntry.getSum());
-                    monthlyProfit.put(month, newMonthSum);
-
-                } else {
-
-                    monthlyProfit.put(month,
-                            accountingEntry.isExpensive() ? - accountingEntry.getSum() : accountingEntry.getSum());
-
-                }
+                addSumForMonth(monthlyProfit, accountingEntry, month);
 
             }
 
-            System.out.println(entry.getKey());
+            printYearlyResult(yearEntry, monthlyProfit, expenseSum, expenseCount, incomeSum, incomeCount);
 
-            for (Map.Entry<Integer, Double> monthlyEntry : monthlyProfit.entrySet()) {
+        }
+    }
 
-                Date date = null;
-                try {
-                    date = new SimpleDateFormat("M").parse(monthlyEntry.getKey().toString());
-                } catch (ParseException e) {
-                    continue;
-                }
+    private void addSumForMonth(Map<Integer, Double> monthlyProfit, YearAccountingEntry accountingEntry, int month) {
+        if (monthlyProfit.containsKey(month)) {
 
-                String month = new SimpleDateFormat("MMMM").format(date);
-                System.out.printf("Прибыль за %s составила:%,.2f\n", month, monthlyEntry.getValue());
+            double newMonthSum = monthlyProfit.get(month)
+                    + (accountingEntry.isExpensive() ? -accountingEntry.getSum() : accountingEntry.getSum());
+            monthlyProfit.put(month, newMonthSum);
 
+        } else {
+
+            monthlyProfit.put(month,
+                    accountingEntry.isExpensive() ? - accountingEntry.getSum() : accountingEntry.getSum());
+
+        }
+    }
+
+    private void printYearlyResult(Map.Entry<Integer, List<YearAccountingEntry>> yearEntry,
+                                   Map<Integer, Double> monthlyProfit,
+                                   Double expenseSum,
+                                   int expenseCount,
+                                   Double incomeSum, int incomeCount) {
+        System.out.println(yearEntry.getKey());
+
+        for (Map.Entry<Integer, Double> monthlyEntry : monthlyProfit.entrySet()) {
+
+            Date date = null;
+            try {
+                date = new SimpleDateFormat("M").parse(monthlyEntry.getKey().toString());
+            } catch (ParseException e) {
+                continue;
             }
 
-            System.out.printf("Средний расход за все месяцы: %,.2f\n", expenseSum / expenseCount);
-            System.out.printf("Средний доход за все месяцы: %,.2f\n", incomeSum / incomeCount);
-            System.out.println(reportDelimiter);
+            String month = new SimpleDateFormat("MMMM").format(date);
+            System.out.printf("Прибыль за %s составила:%,.2f%s",
+                    month,
+                    monthlyEntry.getValue(),
+                    System.lineSeparator());
 
         }
 
+        System.out.printf("Средний расход за все месяцы: %,.2f%s", expenseSum / expenseCount, System.lineSeparator());
+        System.out.printf("Средний доход за все месяцы: %,.2f%s", incomeSum / incomeCount, System.lineSeparator());
+        System.out.println(reportDelimiter);
     }
 }

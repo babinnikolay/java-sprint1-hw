@@ -65,7 +65,7 @@ public class FileReportRepository implements ReportRepository {
         File[] files = resourceFolder.listFiles();
         if (files != null) {
             for (final File fileEntry : files) {
-                if (fileEntry.isFile() && fileEntry.getName().toLowerCase(Locale.ROOT).startsWith("y.")) {
+                if (isYearlyFile(fileEntry)) {
 
                     List<String> fileContents = fileReader.readFileContentsOrNull(fileEntry.getPath());
                     if (fileContents == null) {
@@ -74,18 +74,7 @@ public class FileReportRepository implements ReportRepository {
 
                     int yearOfFile = Integer.parseInt(fileEntry.getName().split("\\.")[1]);
 
-                    List<YearAccountingEntry> yearEntries = new ArrayList<>();
-                    for (int i = 1; i < fileContents.size(); i++) {
-
-                        String[] entryFields = fileContents.get(i).split(fieldsSeparator);
-
-                        YearAccountingEntry yearEntry = new YearAccountingEntry(
-                                Integer.valueOf(entryFields[0]),
-                                Double.valueOf(entryFields[1]),
-                                Boolean.valueOf(entryFields[2]));
-
-                        yearEntries.add(yearEntry);
-                    }
+                    List<YearAccountingEntry> yearEntries = fillYearEntries(fileContents);
 
                     yearlyReports.put(yearOfFile, yearEntries);
 
@@ -93,9 +82,30 @@ public class FileReportRepository implements ReportRepository {
             }
             System.out.println("Данные отчетов прочитаны");
         } else {
-            System.out.printf("Файлы годовых отчетов в папке %s не найдены\n", reportsFolderPath);
+            System.out.printf("Файлы годовых отчетов в папке %s не найдены%s",
+                    reportsFolderPath,
+                    System.lineSeparator());
         }
 
+    }
+
+    private List<YearAccountingEntry> fillYearEntries(List<String> fileContents) {
+
+        List<YearAccountingEntry> yearEntries = new ArrayList<>();
+
+        for (int i = 1; i < fileContents.size(); i++) {
+
+            String[] entryFields = fileContents.get(i).split(fieldsSeparator);
+
+            YearAccountingEntry yearEntry = new YearAccountingEntry(
+                    Integer.valueOf(entryFields[0]),
+                    Double.valueOf(entryFields[1]),
+                    Boolean.valueOf(entryFields[2]));
+
+            yearEntries.add(yearEntry);
+        }
+
+        return yearEntries;
     }
 
     private void fillMonthlyReportsFromFiles() {
@@ -104,34 +114,19 @@ public class FileReportRepository implements ReportRepository {
         if (files != null) {
             for (final File fileEntry : files) {
 
-                if (fileEntry.isFile() && fileEntry.getName().toLowerCase(Locale.ROOT).startsWith("m.")) {
+                if (isMonthlyFile(fileEntry)) {
 
                     List<String> fileContents = fileReader.readFileContentsOrNull(fileEntry.getPath());
                     if (fileContents == null) {
                         continue;
                     }
 
-                    String monthOfFile = fileEntry.getName().split("\\.")[1];
-                    Date month = null;
-                    try {
-                        month = new SimpleDateFormat("yyyyM").parse(monthOfFile);
-                    } catch (ParseException e) {
+                    Date month = getMonthOrNullFromFileName(fileEntry);
+                    if (month == null) {
                         continue;
                     }
 
-                    List<MonthAccountingEntry> monthEntries = new ArrayList<>();
-                    for (int i = 1; i < fileContents.size(); i++) {
-
-                        String[] entryFields = fileContents.get(i).split(fieldsSeparator);
-
-                        MonthAccountingEntry monthEntry = new MonthAccountingEntry(
-                                entryFields[0],
-                                Boolean.valueOf(entryFields[1]),
-                                Double.valueOf(entryFields[2]),
-                                Double.valueOf(entryFields[3]));
-
-                        monthEntries.add(monthEntry);
-                    }
+                    List<MonthAccountingEntry> monthEntries  = fillMonthEntries(fileContents);
                     monthlyReports.put(month, monthEntries);
 
                 }
@@ -140,12 +135,53 @@ public class FileReportRepository implements ReportRepository {
             System.out.println("Данные отчетов прочитаны");
 
         } else {
-            System.out.printf("Файлы месячных отчетов в папке %s не найдены\n", reportsFolderPath);
+            System.out.printf("Файлы месячных отчетов в папке %s не найдены%s",
+                    reportsFolderPath,
+                    System.lineSeparator());
         }
 
     }
 
-    private class FileReader {
+    private boolean isMonthlyFile(File fileEntry) {
+        return fileEntry.isFile() && fileEntry.getName().toLowerCase(Locale.ROOT).startsWith("m.");
+    }
+
+    private boolean isYearlyFile(File fileEntry) {
+        return fileEntry.isFile() && fileEntry.getName().toLowerCase(Locale.ROOT).startsWith("y.");
+    }
+
+    private List<MonthAccountingEntry> fillMonthEntries(List<String> fileContents) {
+
+        List<MonthAccountingEntry> monthEntries = new ArrayList<>();
+        for (int i = 1; i < fileContents.size(); i++) {
+
+            String[] entryFields = fileContents.get(i).split(fieldsSeparator);
+
+            MonthAccountingEntry monthEntry = new MonthAccountingEntry(
+                    entryFields[0],
+                    Boolean.valueOf(entryFields[1]),
+                    Double.valueOf(entryFields[2]),
+                    Double.valueOf(entryFields[3]));
+
+            monthEntries.add(monthEntry);
+        }
+        return monthEntries;
+
+    }
+
+    private Date getMonthOrNullFromFileName(File fileEntry) {
+        Date month = null;
+        String monthOfFile = fileEntry.getName().split("\\.")[1];
+
+        try {
+            month = new SimpleDateFormat("yyyyM").parse(monthOfFile);
+        } catch (ParseException e) {
+            return null;
+        }
+        return month;
+    }
+
+    private static class FileReader {
 
         List<String> readFileContentsOrNull(String path) {
 

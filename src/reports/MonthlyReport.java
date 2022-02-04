@@ -27,16 +27,21 @@ public class MonthlyReport implements Report{
 
         Map<Date, List<MonthAccountingEntry>> monthlyReports = repository.getMonthlyReports();
 
-        for (Map.Entry<Date, List<MonthAccountingEntry>> entry : monthlyReports.entrySet()) {
+        printReportForEachMonth(monthlyReports);
 
-            System.out.println(new SimpleDateFormat("yyyy LLLL").format(entry.getKey()));
+    }
 
-            double maxCost = 0;
-            double minCost = 0;
+    private void printReportForEachMonth(Map<Date, List<MonthAccountingEntry>> monthlyReports) {
+        for (Map.Entry<Date, List<MonthAccountingEntry>> monthlyEntry : monthlyReports.entrySet()) {
+
+            System.out.println(new SimpleDateFormat("yyyy LLLL").format(monthlyEntry.getKey()));
+            
             MonthAccountingEntry mostProfitableItem = null;
             MonthAccountingEntry mostUnprofitableItem = null;
-
-            for (MonthAccountingEntry accountingEntry : entry.getValue()) {
+            double maxCost = 0;
+            double minCost = 0;
+            
+            for (MonthAccountingEntry accountingEntry : monthlyEntry.getValue()) {
 
                 if (accountingEntry.isExpense()) {
                     if (accountingEntry.getCost() > minCost) {
@@ -52,18 +57,29 @@ public class MonthlyReport implements Report{
 
             }
 
-            if (mostProfitableItem != null) {
-                System.out.printf("Самый прибыльный товар: %s на сумму %,.2f\n",
-                        mostProfitableItem.getName(), maxCost);
-            }
-
-            if (mostUnprofitableItem != null) {
-                System.out.printf("Самый убыточный товар: %s на сумму %,.2f\n",
-                        mostUnprofitableItem.getName(), minCost);
-            }
-
-            System.out.println(reportDelimiter);
+            printMonthlyResult(mostProfitableItem, mostUnprofitableItem);
 
         }
+    }
+
+    private void printMonthlyResult(MonthAccountingEntry mostProfitableItem, 
+                                    MonthAccountingEntry mostUnprofitableItem) {
+        
+        if (mostProfitableItem != null) {
+            System.out.printf("Самый прибыльный товар: %s на сумму %,.2f%s",
+                    mostProfitableItem.getName(),
+                    mostProfitableItem.getCost(),
+                    System.lineSeparator());
+        }
+
+        if (mostUnprofitableItem != null) {
+            System.out.printf("Самый убыточный товар: %s на сумму %,.2f%s",
+                    mostUnprofitableItem.getName(),
+                    mostUnprofitableItem.getCost(),
+                    System.lineSeparator());
+        }
+
+        System.out.println(reportDelimiter);
+        
     }
 }

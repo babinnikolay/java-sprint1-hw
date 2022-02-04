@@ -42,8 +42,7 @@ public class ReportChecker {
         Map<Integer, MonthlyTotalsEntry> monthlyTotals = new HashMap<>();
         fillMonthlyTotalsForYear(year, monthlyReports, monthlyTotals);
 
-        List<String> messages = new LinkedList<>();
-        checkTotalsAndFillMessages(year, yearAccountingEntries, monthlyTotals, messages);
+        List<String> messages = checkTotalsAndGetMessages(year, yearAccountingEntries, monthlyTotals);
 
         for (String message : messages) {
             System.out.println(message);
@@ -51,13 +50,17 @@ public class ReportChecker {
 
     }
 
-    private void checkTotalsAndFillMessages(int year, List<YearAccountingEntry> yearAccountingEntries, Map<Integer, MonthlyTotalsEntry> monthlyTotals, List<String> messages) {
+    private List<String> checkTotalsAndGetMessages(int year,
+                                                   List<YearAccountingEntry> yearAccountingEntries,
+                                                   Map<Integer, MonthlyTotalsEntry> monthlyTotals) {
+        List<String> messages = new LinkedList<>();
+
         for (YearAccountingEntry accountingEntry : yearAccountingEntries) {
 
             int month = accountingEntry.getMonth();
             if (monthlyTotals.containsKey(month)) {
 
-                double monthlySum = 0d;
+                double monthlySum;
                 if (accountingEntry.isExpensive()) {
                     monthlySum = monthlyTotals.get(month).getExpense();
                 } else {
@@ -84,6 +87,8 @@ public class ReportChecker {
         if (messages.isEmpty()) {
             messages.add("Данные в годовом и месячных отчетах соответствуют");
         }
+
+        return messages;
 
     }
 
@@ -124,7 +129,6 @@ public class ReportChecker {
 
     private class MonthlyTotalsEntry {
         private String monthView;
-        private Integer month;
         private double expense;
         private double income;
 
@@ -141,7 +145,6 @@ public class ReportChecker {
         }
 
         public MonthlyTotalsEntry(Integer month, double expense, double income) {
-            this.month = month;
             this.expense = expense;
             this.income = income;
 
@@ -149,7 +152,7 @@ public class ReportChecker {
                 Date date = new SimpleDateFormat("M").parse(String.valueOf(month));
                 this.monthView = new SimpleDateFormat("MMMM").format(date);
             } catch (ParseException e) {
-
+                System.out.println(e);
             }
         }
 
